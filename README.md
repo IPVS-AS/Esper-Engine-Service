@@ -2,7 +2,11 @@
 
 This project provides a wrapper API for the CEP Engine [Esper](http://www.espertech.com/esper). To use this wrapper, run mvn install to generate a .war file, which can be deployed into the application server [Tomcat8](http://tomcat.apache.org/tomcat-8.5-doc/).  
 
-How to use the API is explained in detail in the following.
+How to use the API is explained in detail in the following:
+
+**[Data Sources](#data-sources)**  
+**[Event Management](#event-management)**  
+**[Continuous Queries](#continuous-queries)**  
 
 ## Data Sources
 
@@ -190,7 +194,7 @@ Content-Type: application/json
 ## Haftungsausschluss
 
 Dies ist ein Forschungsprototyp.
-Die Haftung f¸r entgangenen Gewinn, Produktionsausfall, Betriebsunterbrechung, entgangene Nutzungen, Verlust von Daten und Informationen, Finanzierungsaufwendungen sowie sonstige Vermˆgens- und Folgesch‰den ist, auﬂer in F‰llen von grober Fahrl‰ssigkeit, Vorsatz und Personensch‰den ausgeschlossen.
+Die Haftung f√ºr entgangenen Gewinn, Produktionsausfall, Betriebsunterbrechung, entgangene Nutzungen, Verlust von Daten und Informationen, Finanzierungsaufwendungen sowie sonstige Verm√∂gens- und Folgesch√§den ist, au√üer in F√§llen von grober Fahrl√§ssigkeit, Vorsatz und Personensch√§den ausgeschlossen.
 
 ## Disclaimer of Warranty
 
