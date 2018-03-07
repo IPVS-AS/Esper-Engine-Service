@@ -9,21 +9,16 @@ import java.util.Map.Entry;
 import org.ipvs_as.event.adapter.DataConnector;
 import org.ipvs_as.event.adapter.HTTPAdapter;
 import org.ipvs_as.event.adapter.MQTTAdapter;
-import org.ipvs_as.event.types.DistanceMeterEvent;
-import org.ipvs_as.event.types.TemperatureEvent;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.espertech.esper.client.Configuration;
 import com.espertech.esper.client.EPServiceProvider;
 import com.espertech.esper.client.EPServiceProviderManager;
 import com.espertech.esper.client.EPStatement;
 import com.espertech.esper.client.EPStatementState;
 import com.espertech.esper.client.EventPropertyDescriptor;
 import com.espertech.esper.client.EventType;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -44,10 +39,8 @@ public class EsperWrapper implements IEngineCallback {
     private Map<String, QuerySubscriber> querySubscribers = new HashMap<String, QuerySubscriber>();
 
     private EsperWrapper() {
-	Configuration config = new Configuration();
-	config.addEventTypeAutoName("org.ipvs_as.event.types");
 
-	epService = EPServiceProviderManager.getDefaultProvider(config);
+	epService = EPServiceProviderManager.getDefaultProvider();
 	epService.initialize();
     }
 
@@ -121,14 +114,12 @@ public class EsperWrapper implements IEngineCallback {
     }
 
     public String getStatus() {
-	String[] currentQueries = epService.getEPAdministrator().getStatementNames();
-	StringBuilder sb = new StringBuilder(
-		"Esper is currently running " + currentQueries.length + " queries with ids: \n");
-
-	for (String queryName : currentQueries) {
-	    sb.append(
-		    queryName + " state: " + epService.getEPAdministrator().getStatement(queryName).getState() + "\n");
-	}
+	StringBuilder sb = new StringBuilder("Esper is running!!!\n\n");
+	sb.append("Configured event types: \n\n");
+	sb.append(getEventTypes());
+	sb.append("\n\n");
+	sb.append("Configured continuous queries: \n\n");
+	sb.append(getQueries());
 	return sb.toString();
     }
 
@@ -274,44 +265,20 @@ public class EsperWrapper implements IEngineCallback {
     }
 
     public void sendEvent(String message) {
+
 	JSONObject eventJSON = new JSONObject(message);
 	String[] names = JSONObject.getNames(eventJSON);
+
 	for (String eventName : names) {
-	    try {
-		if (TemperatureEvent.class.getSimpleName().equalsIgnoreCase(eventName)) {
-		    String data = eventJSON.get(eventName).toString();
-		    TemperatureEvent eventFromJSON = mapper.readValue(data, TemperatureEvent.class);
+	    Map<String, Object> event = new HashMap<String, Object>();
+	    JSONObject dataJson = (JSONObject) eventJSON.get(eventName);
+	    String[] attNames = JSONObject.getNames(dataJson);
 
-		    epService.getEPRuntime().sendEvent(eventFromJSON);
-
-		} else if (DistanceMeterEvent.class.getSimpleName().equalsIgnoreCase(eventName)) {
-		    String data = eventJSON.get(eventName).toString();
-		    DistanceMeterEvent eventFromJSON = mapper.readValue(data, DistanceMeterEvent.class);
-
-		    epService.getEPRuntime().sendEvent(eventFromJSON);
-
-		} else {
-
-		    Map<String, Object> event = new HashMap<String, Object>();
-		    JSONObject dataJson = (JSONObject) eventJSON.get(eventName);
-		    String[] attNames = JSONObject.getNames(dataJson);
-
-		    for (String attName : attNames) {
-			event.put(attName, dataJson.get(attName));
-		    }
-
-		    epService.getEPRuntime().sendEvent(event, eventName);
-		}
-	    } catch (JsonParseException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	    } catch (JsonMappingException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	    } catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
+	    for (String attName : attNames) {
+		event.put(attName, dataJson.get(attName));
 	    }
+
+	    epService.getEPRuntime().sendEvent(event, eventName);
 	}
     }
 

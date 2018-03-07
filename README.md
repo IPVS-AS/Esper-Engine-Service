@@ -86,7 +86,7 @@ Content-Type: application/json
 POST /EsperService/event HTTP/1.1  
 Content-Type: application/json  
 ```javascript
-{"TempEvent": {"sensorID": "A0", "temperature": "19.0"}}
+{"TempEvent": {"sensorID": "A0", "temperature": 19.0}}
 ```
 
 HTTP/1.1 204 No Content  
@@ -119,6 +119,12 @@ Content-Type: application/json
 ```javascript
 {"query_id":"stmt_3","status":"running"}
 ```
+
+The subscriber to the topic *situation* will receive a message in the following format containing the triggered *query_id* and the event properties: 
+```javascript
+{"query_id":"stmt_3","event":{"temperature":39,"sensorID":"A0"}}
+```
+
 
 ### Get all continuous queries:
 GET /EsperService/queries  
@@ -159,6 +165,11 @@ HTTP/1.1 200 OK
 Content-Type: application/json  
 ```javascript
 {"subscription_id":"sub1520344781693","query_id":"stmt_2"}
+```
+
+The subscriber to the topic *situation* will receive a message in the following format containing the triggered *query_id* and the event properties: 
+```javascript
+{"query_id":"stmt_2","event":{"temperature":39,"sensorID":"A0"}}
 ```
 
 ### Get subscribers of continuous query {query_id}:

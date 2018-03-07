@@ -2,6 +2,10 @@ package org.ipvs_as.engine;
 
 import org.ipvs_as.event.adapter.DataConnector;
 
+/**
+ * @author Ana Cristina Franco da Silva, University of Stuttgart
+ *
+ */
 public class Query {
     private String query;
     private DataConnector subscriber;
