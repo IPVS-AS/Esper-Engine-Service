@@ -7,7 +7,9 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.ipvs_as.event.adapter.DataConnector;
+import org.ipvs_as.event.adapter.HTTPAdapter;
 import org.ipvs_as.event.adapter.MQTTAdapter;
+import org.ipvs_as.event.adapter.OrionAdapter;
 import org.json.JSONObject;
 
 /**
@@ -74,7 +76,15 @@ public class QuerySubscriber {
 			}
 			adapter.stop();
 		    } else if (EsperWrapper.PROTOCOL_HTTP.equalsIgnoreCase(dataSource.getProtocol())) {
-			// TODO
+			HTTPAdapter adapter = new HTTPAdapter(dataSource.getEndpoint());
+			for (String topic : dataSource.getTopics()) {
+			    adapter.publish(topic, root.toString());
+			}
+		    } else if (EsperWrapper.PROTOCOL_HTTP_ORION.equalsIgnoreCase(dataSource.getProtocol())) {
+			OrionAdapter adapter = new OrionAdapter(dataSource.getEndpoint());
+			for (String topic : dataSource.getTopics()) {
+			    adapter.publish(topic, root.toString());
+			}
 		    }
 		}
 

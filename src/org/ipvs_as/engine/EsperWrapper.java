@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import org.ipvs_as.event.adapter.DataConnector;
 import org.ipvs_as.event.adapter.HTTPAdapter;
 import org.ipvs_as.event.adapter.MQTTAdapter;
+import org.ipvs_as.event.adapter.OrionAdapter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -29,6 +30,7 @@ public class EsperWrapper implements IEngineCallback {
     // Constants
     public final static String PROTOCOL_MQTT = "MQTT";
     public final static String PROTOCOL_HTTP = "HTTP";
+    public final static String PROTOCOL_HTTP_ORION = "HTTP-ORION";
 
     private final EPServiceProvider epService;
     private ObjectMapper mapper = new ObjectMapper();
@@ -167,6 +169,14 @@ public class EsperWrapper implements IEngineCallback {
 		    dataSources.put(adapter.getName(), dataSourceObj);
 		    adapters.put(adapter.getName(), adapter);
 		    return adapter.getName();
+
+		} else if (PROTOCOL_HTTP_ORION.equals(dataSourceProtocol.toUpperCase())) {
+		    OrionAdapter adapter = new OrionAdapter(dataSourceObj.getEndpoint(), this);
+		    adapter.bind(dataSourceObj.getTopics());
+		    dataSources.put(adapter.getName(), dataSourceObj);
+		    adapters.put(adapter.getName(), adapter);
+		    return adapter.getName();
+
 		}
 	    }
 

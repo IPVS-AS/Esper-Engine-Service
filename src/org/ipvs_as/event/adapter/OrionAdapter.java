@@ -10,37 +10,25 @@ import java.net.ProtocolException;
 import java.net.URL;
 
 import org.ipvs_as.engine.IEngineCallback;
+import org.json.JSONObject;
 
 /**
  * @author Ana Cristina Franco da Silva, University of Stuttgart
  *
  */
-public class HTTPAdapter {
-    protected final int SLEEP_TIME_MS = 5000;
-    protected IEngineCallback engineCallback = null;
-    protected String brokerURL;
-    protected String name;
-    protected boolean state_running = true;
-    protected Thread httpRequester = null;
+public class OrionAdapter extends HTTPAdapter {
 
-    public HTTPAdapter(final String brokerURL, final IEngineCallback engineCallback) {
-	this.brokerURL = brokerURL;
-	this.engineCallback = engineCallback;
-	this.name = "ha" + System.currentTimeMillis();
+    public OrionAdapter(String brokerURL) {
+	super(brokerURL);
     }
 
-    public HTTPAdapter(final String brokerURL) {
-	this.brokerURL = brokerURL;
-	this.name = "ha" + System.currentTimeMillis();
-    }
-
-    public String getName() {
-	return this.name;
+    public OrionAdapter(String endpoint, IEngineCallback esperWrapper) {
+	super(endpoint, esperWrapper);
     }
 
     public void bind(final String[] topics) {
 
-	httpRequester = new Thread(new Runnable() {
+	super.httpRequester = new Thread(new Runnable() {
 
 	    @Override
 	    public void run() {
@@ -49,13 +37,24 @@ public class HTTPAdapter {
 			URL url = new URL(brokerURL + "/" + topics[0]); // FIXME
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Accept", "application/json"); // FIXME
+			connection.setRequestProperty("Accept", "text/plain");
 
 			// read the HTTP answer
 			BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			System.out.println(reader.readLine());
-			// TODO send it to esper as event
-			engineCallback.sendEvent(reader.readLine());
+
+			String value = reader.readLine();
+			double valueDouble = Double.parseDouble(value);
+			// send it to esper as event
+			JSONObject jsonObj = new JSONObject();
+
+			JSONObject valueObject = new JSONObject();
+			valueObject.put("value", valueDouble);
+
+			jsonObj.put("TopicIN", valueObject);
+
+			System.out.println(jsonObj.toString());
+			engineCallback.sendEvent(jsonObj.toString());
+
 			reader.close();
 
 		    } catch (MalformedURLException e1) {
@@ -85,13 +84,22 @@ public class HTTPAdapter {
 	try {
 	    URL url = new URL(brokerURL + "/" + topic);
 	    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-	    connection.setRequestMethod("POST");
-	    connection.setRequestProperty("Content-Type", "application/json");
+	    connection.setRequestMethod("PUT");
+	    connection.setRequestProperty("Content-Type", "text/plain");
+	    connection.setDoInput(true);
 	    connection.setDoOutput(true);
+	    connection.setUseCaches(false);
 	    OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
 
-	    writer.write(message);
+	    JSONObject obj = new JSONObject(message);
+	    String cmd = (String) ((JSONObject) obj.get("event")).get("cmd");
+
+	    writer.write("\"" + cmd + "\"");
 	    writer.flush();
+
+	    // read the HTTP answer
+	    int responseCode = connection.getResponseCode();
+	    System.out.println("deliveryComplete. Response Code: " + responseCode);
 	    writer.close();
 
 	} catch (MalformedURLException e) {
@@ -105,12 +113,4 @@ public class HTTPAdapter {
 	    e.printStackTrace();
 	}
     }
-
-    public void stop() {
-	state_running = false;
-	if (httpRequester != null) {
-	    httpRequester.interrupt();
-	}
-    }
-
 }
