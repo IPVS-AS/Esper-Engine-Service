@@ -1,8 +1,10 @@
 package org.ipvs_as.engine;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -130,11 +132,29 @@ public class EsperWrapper implements IEngineCallback {
 
 	JSONArray queries = new JSONArray();
 	for (String queryName : currentQueries) {
-	    String queryState = epService.getEPAdministrator().getStatement(queryName).getState().name();
-	    queries.put(new JSONObject().put("query_id", queryName).put("status", queryState));
+	    String query = epService.getEPAdministrator().getStatement(queryName).getText();
 
+	    if (!query.toLowerCase().contains("create schema")) {
+
+		String queryState = epService.getEPAdministrator().getStatement(queryName).getState().name();
+		queries.put(new JSONObject().put("query_id", queryName).put("query", query).put("status", queryState));
+	    }
 	}
 	return queries.toString();
+    }
+
+    public String getQueryNames() {
+	String[] currentQueries = epService.getEPAdministrator().getStatementNames();
+	List<String> queriesOnly = new ArrayList<String>();
+
+	for (String queryName : currentQueries) {
+	    String query = epService.getEPAdministrator().getStatement(queryName).getText();
+
+	    if (!query.toLowerCase().contains("create schema")) {
+		queriesOnly.add(queryName);
+	    }
+	}
+	return String.join(";", queriesOnly);
     }
 
     /**
@@ -219,6 +239,13 @@ public class EsperWrapper implements IEngineCallback {
 		adapter.stop();
 		adapters.remove(datasource_id);
 		dataSources.remove(datasource_id);
+
+	    } else if (PROTOCOL_HTTP_ORION.equals(dataSource.getProtocol().toUpperCase())) {
+		OrionAdapter adapter = (OrionAdapter) adapters.get(datasource_id);
+		adapter.stop();
+		adapters.remove(datasource_id);
+		dataSources.remove(datasource_id);
+
 	    }
 	    try {
 		return mapper.writeValueAsString(dataSource);

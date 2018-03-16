@@ -32,7 +32,11 @@ public class EventService {
     @Produces(MediaType.APPLICATION_JSON)
     public String createEventType(String message) {
 	String id = engine.createEventType(message);
-	return new JSONObject().put("eventtype_id", id).put("status", "running").toString();
+	if (id != null) {
+	    return new JSONObject().put("eventtype_id", id).put("status", "running").toString();
+	} else {
+	    return new JSONObject().put("status", "failed").toString();
+	}
     }
 
     @POST

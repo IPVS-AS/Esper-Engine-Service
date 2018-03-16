@@ -27,12 +27,22 @@ public class QueryService {
 	return engine.getQueries();
     }
 
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getQueryNames() {
+	return engine.getQueryNames();
+    }
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public String startEsperQueryAndSubscribe(String message) {
 	String id = engine.createQuery(message);
-	return new JSONObject().put("query_id", id).put("status", "running").toString();
+	if (id != null) {
+	    return new JSONObject().put("query_id", id).put("status", "running").toString();
+	} else {
+	    return new JSONObject().put("status", "failed").toString();
+	}
     }
 
     @GET
