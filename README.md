@@ -10,7 +10,7 @@ How to use the API is explained in detail in the following:
 
 ## Data Sources
 
-A data source provides event for the Esper engine. By adding a data source, an input adapter is instantiated, which extracts data from this data source and forwards this data to the Esper engine.
+A data source provides event for the Esper engine. By adding a data source, an input adapter is instantiated, which extracts data from this data source and forwards this data to the Esper engine. Currently, it is possible to add a *MQTT-based Message Broker* and a *FIWARE Orion Context Broker* as data sources, however, only if authentication is not configured. 
 
 ### Add data source:
      
@@ -24,6 +24,20 @@ HTTP/1.1 201 CREATED
 Content-Type: application/json  
 ```javascript
 {"datasource_id":"paho704154760161418","status":"BOUND"}
+```
+
+To add a Fiware Orion as data source, where *EntityName = Demoraum* and *AttributeName = temp1*:  
+
+POST /EsperService/datasources HTTP/1.1  
+Content-Type: application/json  
+Accept: application/json  
+```javascript
+{"protocol": "HTTP-Orion", "endpoint":"http://192.168.209.165:1026/v2/entities", "topics":["Demoraum/attrs/temp1/value"]}
+```
+HTTP/1.1 201 CREATED  
+Content-Type: application/json  
+```javascript
+{"datasource_id":"ha704154760161418","status":"BOUND"}
 ```
 
 ### Get data sources: 
@@ -92,7 +106,7 @@ Content-Type: application/json
 HTTP/1.1 204 No Content  
 
 ## Continuous Queries
-The provided API allows the creation of continuous queries at runtime. Furthermore, subscribers can be added to a query in order to get notified when this query matches one or more input events.
+The provided API allows the creation of continuous queries at runtime. Furthermore, subscribers can be added to a query in order to get notified when this query matches one or more input events. Currently, it is possible to add a *MQTT-based Message Broker* and a *FIWARE Orion Context Broker* as subscribers, however, only if authentication is not configured. 
 
 ### Create and start a continuous query:
 POST /EsperService/queries HTTP/1.1  
@@ -154,7 +168,7 @@ Content-Type: application/json
 {"query_id":"stmt_2","status":"STARTED"}
 ```
 
-### Add subscriber continuous query {query_id}:
+### Add subscriber to continuous query {query_id}:
 POST /EsperService/queries/stmt_2/subscriptions  
 Content-Type: application/json  
 ```javascript
@@ -171,6 +185,21 @@ The subscriber to the topic *situation* will receive a message in the following 
 ```javascript
 {"query_id":"stmt_2","event":{"temperature":39,"sensorID":"A0"}}
 ```
+
+To add Fiware Orion as subscriber, where *EntityName = Demoraum-switch* and *AttributeName = cmd*:
+
+POST /EsperService/queries/stmt_2/subscriptions  
+Content-Type: application/json  
+```javascript
+{"protocol": "HTTP-Orion", "endpoint": "http://192.168.209.165:1026/v2/entities", "topics": ["Demoraum-switch/attrs/cmd/value"]} 
+```
+
+HTTP/1.1 200 OK  
+Content-Type: application/json  
+```javascript
+{"subscription_id":"sub1520344781693","query_id":"stmt_2"}
+```
+
 
 ### Get subscribers of continuous query {query_id}:
 GET /EsperService/queries/stmt_2/subscriptions  
