@@ -1,6 +1,11 @@
 package org.ipvs_as.engine;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,8 +47,126 @@ public class EsperWrapper implements IEngineCallback {
     private Map<String, Object> adapters = new HashMap<String, Object>();
     private Map<String, QuerySubscriber> querySubscribers = new HashMap<String, QuerySubscriber>();
 
+    //
+    
+    private String brokerURL = "http://81.14.203.235:1026/v2/entities/";
+    
+    
+    protected String[] headers = {"FIWARE-Service=hackboi"};
+    
+    private String parseEntityId(final String topic) {
+		return topic.substring(0,topic.indexOf("/attrs/"));		
+	}
+	
+	private String parseAttributeName(final String topic) {
+		return topic.substring(topic.indexOf("/attrs/") +  "/attrs/".length(), topic.indexOf("/value"));
+	}
+	
+	protected Map<String,String> parseHeadersList() {
+		Map<String,String> headerMap = new HashMap<String,String>();
+		for(String header : headers) {
+			String[] headerSplit = header.split("=");
+			headerMap.put(headerSplit[0], headerSplit[1]);
+		}
+		return headerMap;
+	}
+    
+    private boolean isTopicAvailable(final String topic) {
+		URL url;
+		try {
+			url = new URL(brokerURL + "/" + topic);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setRequestProperty("Content-Type", "text/plain");
+			connection.setDoInput(true);
+			connection.setDoOutput(true);
+			connection.setUseCaches(false);
+			
+			if (headers != null) {
+				System.out.println("Setting Headers:");
+				Map<String, String> headerMap = parseHeadersList();
+				for (String key : headerMap.keySet()) {
+					System.out.println("Key: " + key + " Val: " + headerMap.get(key));
+					connection.setRequestProperty(key, headerMap.get(key));
+				}
+			}
+			
+			int respCode = connection.getResponseCode();
+			
+			if(respCode < 400) {
+				return true;
+			}
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return false;
+	}
+    
+    private void createTopic(final String topic) {
+		try {
+			//  /<entityID>/attrs/<attributeName>/value
+			//# types: /Entity             /Atribute
+			//# where topic = "/<entityID>/attrs/<attributeName>/value"
+			//#
+			// {"id": entityID, "type":"Topic", attributeName: {"value": "", "type": "Float"}}
+			
+			String jsonBodyString = "{\"id\": "+this.parseEntityId(topic)+", \"type\":\"Topic\", "+this.parseAttributeName(topic)+": {\"value\": \"\", \"type\": \"String\"}}";
+						
+			// create JSON Body			
+			URL url = new URL(brokerURL);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("POST");
+			connection.setRequestProperty("Content-Type", "application/json");
+			connection.setDoInput(true);
+			connection.setDoOutput(true);
+			connection.setUseCaches(false);
+			
+			if (headers != null) {
+				System.out.println("Setting headers");
+				Map<String, String> headerMap = parseHeadersList();
+				for (String key : headerMap.keySet()) {
+					System.out.println("Key: " + key);
+					connection.setRequestProperty(key, headerMap.get(key));
+					System.out.println("Val: " + headerMap.get(key));
+				}
+			}
+			
+			OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
+			
+			writer.write(jsonBodyString);
+			writer.flush();
+			
+			int responseCode = connection.getResponseCode();
+			System.out.println("deliveryComplete. Response Code: " + responseCode);
+			writer.close();
+	
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ProtocolException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+    
+    // 
+    
+    
     private EsperWrapper() {
 
+    	boolean test = this.isTopicAvailable("hack2/attrs/cmd1/value");
+    	
+    	System.out.println("Topic available: " + test);
+    	
 	epService = EPServiceProviderManager.getDefaultProvider();
 	epService.initialize();
     }
@@ -190,8 +313,8 @@ public class EsperWrapper implements IEngineCallback {
 		    adapters.put(adapter.getName(), adapter);
 		    return adapter.getName();
 
-		} else if (PROTOCOL_HTTP_ORION.equals(dataSourceProtocol.toUpperCase())) {
-		    OrionAdapter adapter = new OrionAdapter(dataSourceObj.getEndpoint(), this);
+		} else if (PROTOCOL_HTTP_ORION.equals(dataSourceProtocol.toUpperCase())) {			
+		    OrionAdapter adapter = new OrionAdapter(dataSourceObj.getEndpoint(), dataSourceObj.getHeaders(), this);
 		    adapter.bind(dataSourceObj.getTopics());
 		    dataSources.put(adapter.getName(), dataSourceObj);
 		    adapters.put(adapter.getName(), adapter);
@@ -257,10 +380,12 @@ public class EsperWrapper implements IEngineCallback {
 	}
     }
 
+
     public String subscribeToQuery(String query_id, String dataSink) {
 	String subscription_id = "";
 	try {
 	    DataConnector obj = mapper.readValue(dataSink, DataConnector.class);
+	    
 	    QuerySubscriber subscriber = querySubscribers.get(query_id);
 	    if (subscriber != null) {
 		subscription_id = subscriber.addDataConnector(obj);

@@ -13,8 +13,9 @@ public class DataConnector {
     private String protocol;
     private String endpoint;
     private String[] topics;
+    private String[] headers;
 
-    public DataConnector() {
+	public DataConnector() {
     }
 
     public DataConnector(final String protocol, final String serverURL, final String[] topics) {
@@ -22,6 +23,13 @@ public class DataConnector {
 	this.endpoint = serverURL;
 	this.topics = topics;
     }
+    
+    public DataConnector(final String protocol, final String serverURL, final String[] topics, final String[] headers) {
+    	this.protocol = protocol;
+    	this.endpoint = serverURL;
+    	this.topics = topics;
+    	this.headers = headers;
+        }
 
     public String getProtocol() {
 	return protocol;
@@ -46,6 +54,14 @@ public class DataConnector {
     public void setTopics(String[] topics) {
 	this.topics = topics;
     }
+    
+    public String[] getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(String[] headers) {
+		this.headers = headers;
+	}
 
     @Override
     public String toString() {

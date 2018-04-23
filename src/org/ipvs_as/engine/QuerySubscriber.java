@@ -67,22 +67,27 @@ public class QuerySubscriber {
 		    eventProperties.put(pair.getKey(), pair.getValue());
 		}
 		System.out.println("Message to subscribers:" + root.toString());
-		for (DataConnector dataSource : dataConnectors.values()) {
-		    if (EsperWrapper.PROTOCOL_MQTT.equalsIgnoreCase(dataSource.getProtocol())) {
-			MQTTAdapter adapter = new MQTTAdapter(dataSource.getEndpoint());
+		for (DataConnector dataSink : dataConnectors.values()) {
+		    if (EsperWrapper.PROTOCOL_MQTT.equalsIgnoreCase(dataSink.getProtocol())) {
+			MQTTAdapter adapter = new MQTTAdapter(dataSink.getEndpoint());
 			adapter.connect();
-			for (String topic : dataSource.getTopics()) {
+			for (String topic : dataSink.getTopics()) {
 			    adapter.publish(topic, root.toString());
 			}
 			adapter.stop();
-		    } else if (EsperWrapper.PROTOCOL_HTTP.equalsIgnoreCase(dataSource.getProtocol())) {
-			HTTPAdapter adapter = new HTTPAdapter(dataSource.getEndpoint());
-			for (String topic : dataSource.getTopics()) {
+		    } else if (EsperWrapper.PROTOCOL_HTTP.equalsIgnoreCase(dataSink.getProtocol())) {
+			HTTPAdapter adapter = new HTTPAdapter(dataSink.getEndpoint());
+			for (String topic : dataSink.getTopics()) {
 			    adapter.publish(topic, root.toString());
 			}
-		    } else if (EsperWrapper.PROTOCOL_HTTP_ORION.equalsIgnoreCase(dataSource.getProtocol())) {
-			OrionAdapter adapter = new OrionAdapter(dataSource.getEndpoint());
-			for (String topic : dataSource.getTopics()) {
+		    } else if (EsperWrapper.PROTOCOL_HTTP_ORION.equalsIgnoreCase(dataSink.getProtocol())) {
+		    	OrionAdapter adapter = null;
+		    	if(dataSink.getHeaders() != null) {
+		    		adapter = new OrionAdapter(dataSink.getEndpoint(), dataSink.getHeaders());		    		
+		    	} else {
+		    		adapter = new OrionAdapter(dataSink.getEndpoint());
+		    	}
+			for (String topic : dataSink.getTopics()) {
 			    adapter.publish(topic, root.toString());
 			}
 		    }
