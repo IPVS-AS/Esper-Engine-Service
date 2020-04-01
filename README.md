@@ -1,6 +1,6 @@
-# EsperService
+# Esper Service
 
-This project provides a wrapper API for the CEP Engine [Esper](http://www.espertech.com/esper). To use this wrapper, run mvn install to generate a .war file, which can be deployed into the application server [Tomcat8](http://tomcat.apache.org/tomcat-8.5-doc/).  
+This project provides a wrapper API for the CEP Engine [Esper](http://www.espertech.com/esper). To use this wrapper, run `mvn install` to generate a `.war` file, which can be deployed into the application server [Tomcat8](http://tomcat.apache.org/tomcat-8.5-doc/).  
 
 How to use the API is explained in detail in the following:
 
